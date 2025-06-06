@@ -7,11 +7,70 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     //TODO: toggle like on video
+
+    if(!videoId){
+        throw new ApiError(400, "Video ID is required")
+    }
+
+    const existingLiked = await Like.findOne({
+        video : videoId,
+        likedBy : req.user?._id
+    })
+
+    if(existingLiked){
+        await Like.findByIdAndDelete(existingLiked._id)
+
+        return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Like remove successfully"));
+    }else{
+        const newLike = await Like.create({
+            video : videoId,
+            likedBy : req.user?._id
+        })
+
+        if(!newLike){
+            throw new ApiError(500, "Failed to like the video")
+        }
+
+        return res 
+        .status(201)
+        .json (new ApiResponse(201, newLike, "Video liked successfully"))
+    }
+
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
     const {commentId} = req.params
     //TODO: toggle like on comment
+    if (!commentId){
+        throw new ApiError(400, "Comment ID is not found")
+    }
+
+    const existingLikedComment = await Like.findOne({
+        comment: commentId,
+        likedBy: req.user?._id
+    })
+
+    if(existingLikedComment){
+        await Like.findByIdAndDelete(existingLikedComment._id)
+        return res
+        .status(200)
+        .json(new ApiResponse(200, {}, "Comment Like is removed successfully "))
+    }
+
+    const newLike = await Like.create({
+        comment : commentId,
+        likedBy : req.user?._id
+    })
+
+    if(!newLike){
+        throw new ApiError(500, "Failed to like the comment")
+    }
+
+    return res
+    .status(201)
+    .json(new ApiResponse(201, newLike, "comment Liked successfully"))
 
 })
 
